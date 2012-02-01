@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<prefwindow id="coffeescript-prefs"
+     title="CoffeeScript Compiler  Preferences"
+     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+	<prefpane id="coffeescript-pane" label="CoffeeScript Compiler Preferences">
+	  <preferences>
+		<preference id="pref_showMessages" name="extensions.coffeescript.showMessages" type="bool" />
+		<preference id="pref_bare" name="extensions.coffeescript.bare" type="bool" />
+	  </preferences>
+
+	  <hbox align="center">
+		<checkbox id="showMessages" preference="pref_showMessages" label="Show console messages when saving files" />
+	  </hbox>
+	  <hbox align="center">
+		<checkbox id="bare" preference="pref_bare" label="Compile the JavaScript without the top-level function safety wrapper" />
+	  </hbox>
+	</prefpane>
+
+</prefwindow>

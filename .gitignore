@@ -1,0 +1,4 @@
+_prj_internal_
+build
+*.xpi
+.DS_Store

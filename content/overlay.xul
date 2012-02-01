@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<overlay id="coffeescriptcompiler" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+	<script type="application/x-javascript" src="chrome://coffeescriptcompiler/content/overlay.js" />
+
+    <commandset id="allcommands">
+      <command id="Tasks:CoffeeScriptCompileFile" oncommand="extensions.coffeescript.compileFile(true);"/>
+      <command id="Tasks:CoffeeScriptCompileBuffer" oncommand="extensions.coffeescript.compileBuffer();"/>
+      <command id="Tasks:CoffeeScriptCompileSelection" oncommand="extensions.coffeescript.compileSelection();"/>
+    </commandset>
+
+    <menupopup id="popup_tools">
+      <menu id="menu_coffeescript" label="CoffeeScript">
+        <menupopup id="menu_coffeescript_popup">
+          <menuitem id="menu_coffeescript_file"
+                  label="Compile Saved File "
+                  observes="Tasks:CoffeeScriptCompileFile"
+                  class="menu-iconic-wide" />
+          <menuitem id="menu_coffeescript_buffer"
+                  label="Compile Current Buffer"
+                  observes="Tasks:CoffeeScriptCompileBuffer"
+                  class="menu-iconic-wide" />
+          <menuitem id="menu_coffeescript_selection"
+                  label="Compile Selection"
+                  observes="Tasks:CoffeeScriptCompileSelection"
+                  class="menu-iconic-wide" />
+        </menupopup>
+      </menu>
+    </menupopup>
+
+    <menupopup id="editorContextMenu">
+      <menu id="menu_coffeescript_context" label="CoffeeScript">
+          <menupopup id="menu_coffeescript_context_popup">
+            <menuitem id="menu_coffeescript_context_file"
+                    label="Compile Saved File"
+                    observes="Tasks:CoffeeScriptCompileFile"
+                    class="menu-iconic-wide" />
+            <menuitem id="menu_coffeescript_context_buffer"
+                    label="Compile Current Buffer"
+                    observes="Tasks:CoffeeScriptCompileBuffer"
+                    class="menu-iconic-wide" />
+            <menuitem id="menu_coffeescript_context_selection"
+                    label="Compile Selection"
+                    observes="Tasks:CoffeeScriptCompileSelection"
+                    class="menu-iconic-wide" />
+          </menupopup>
+      </menu>
+    </menupopup>
+</overlay>

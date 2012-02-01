@@ -1,0 +1,2 @@
+content coffeescriptcompiler content/
+overlay chrome://komodo/content/komodo.xul chrome://coffeescriptcompiler/content/overlay.xul
