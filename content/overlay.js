@@ -1,7 +1,5 @@
 // tools for common Komodo extension chores
 xtk.load('chrome://coffeescriptcompiler/content/toolkit.js');
-// Komodo console in Output Window
-xtk.load('chrome://coffeescriptcompiler/content/konsole.js');
 
 xtk.load('chrome://coffeescriptcompiler/content/coffee-script.js');
 
@@ -9,13 +7,30 @@ xtk.load('chrome://coffeescriptcompiler/content/coffee-script.js');
  * Namespaces
  */
 if (typeof(extensions) === 'undefined') extensions = {};
-if (typeof(extensions.coffeescript) === 'undefined') extensions.coffeescript = { version : '1.0.0' };
+if (typeof(extensions.coffeescript) === 'undefined') extensions.coffeescript = { version : '1.1.0' };
 
 (function() {
 	var self = this;
 
 	var prefs = Components.classes["@mozilla.org/preferences-service;1"]
         .getService(Components.interfaces.nsIPrefService).getBranch("extensions.coffeescript.");
+
+	if (typeof ko.notifications !== 'undefined') {
+		var msgLevels = {
+			INFO : Components.interfaces.koINotification.SEVERITY_INFO,
+			WARNING : Components.interfaces.koINotification.SEVERITY_WARNING,
+			ERROR : Components.interfaces.koINotification.SEVERITY_ERROR
+		};
+	} else {
+		// Komodo console in Output Window
+		xtk.load('chrome://coffeescriptcompiler/content/konsole.js');
+
+		var msgLevels = {
+			INFO : msgLevels.INFO,
+			WARNING : konsole.S_WARNING,
+			ERROR : konsole.S_ERROR
+		};
+	}
 
 	this.compileFile = function(showWarning) {
 		showWarning = showWarning || false;
@@ -25,23 +40,22 @@ if (typeof(extensions.coffeescript) === 'undefined') extensions.coffeescript = {
 			path = (file) ? file.URI : null;
 
 		if (!file) {
-			self._log('Please save the file first', konsole.S_ERROR);
+			self._log('Please save the file first', msgLevels.ERROR, 'Did you mean to compile the buffer?');
 			return;
 		}
 
-		if (file.ext == '.coffee') {
-			self._log('Compiling CoffeeScript into Javascript', konsole.S_DEBUG);
+		if (d.language == 'CoffeeScript') {
+			self._log('Compiling CoffeeScript into Javascript', msgLevels.INFO);
 
 			var output = this._compile(d.buffer),
 				newFilename = path.replace('.coffee', '.js');
 
 			if (output) {
 				self._saveFile(newFilename, output);
-				self._log('File saved', konsole.S_OK);
 			}
 		} else {
 			if (showWarning) {
-				self._log('Not a CoffeeScript file', konsole.S_ERROR);
+				self._log('Not a CoffeeScript file', msgLevels.WARNING);
 			}
 		}
 	};
@@ -71,8 +85,6 @@ if (typeof(extensions.coffeescript) === 'undefined') extensions.coffeescript = {
 
 	this._saveFile = function(filepath, filecontent) {
 		try {
-			self._log('Saving file as ' + filepath, konsole.S_DEBUG);
-
 			var file = Components
 				.classes["@activestate.com/koFileEx;1"]
 				.createInstance(Components.interfaces.koIFileEx);
@@ -82,8 +94,10 @@ if (typeof(extensions.coffeescript) === 'undefined') extensions.coffeescript = {
 
 			file.puts(filecontent);
 			file.close();
+
+			self._log('File saved as: ' + filepath, msgLevels.INFO);
 		} catch(e) {
-			self._log('Error saving file', konsole.S_ERROR);
+			self._log('Error saving file', msgLevels.ERROR, e.message);
 		}
 
 		return;
@@ -95,15 +109,24 @@ if (typeof(extensions.coffeescript) === 'undefined') extensions.coffeescript = {
 				bare: prefs.getBoolPref('bare')
 			});
 		} catch(e) {
-			self._log('Error parsing CoffeeScript: ' + e.message, konsole.S_ERROR);
+			self._log('Error parsing CoffeeScript', msgLevels.ERROR, e.message);
 			return false;
 		}
 	};
 
-	this._log = function(message, style) {
-		if (style == konsole.S_ERROR || prefs.getBoolPref('showMessages')) {
-			konsole.popup();
-			konsole.writeln('[CoffeeScript] ' + message, style);
+	this._log = function(message, style, extra) {
+		extra = extra || '';
+
+		if (style == msgLevels.ERROR || prefs.getBoolPref('showMessages')) {
+			if (typeof ko.notifications !== 'undefined') {
+				ko.notifications.add(message, ['CoffeeScript Compiler'], 'coffeescript' + (new Date().getTime()), {
+					severity : style,
+					description : extra
+				});
+			} else {
+				konsole.popup();
+				konsole.writeln('[CoffeeScript] ' + message + extra, style);
+			}
 		}
 	};
 }).apply(extensions.coffeescript);
