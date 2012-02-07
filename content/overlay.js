@@ -1,4 +1,19 @@
+/*
+Copyright (C) 2012 Eric Faerber
 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 xtk.load('chrome://coffeescriptcompiler/content/toolkit.js');
 
 xtk.load('chrome://coffeescriptcompiler/content/coffee-script.js');
@@ -8,6 +23,7 @@ if (typeof extensions === "undefined" || extensions === null) extensions = {};
 extensions.coffeescript = (function() {
   var msgLevels, prefs,
     _this = this;
+  this.version = '2.0.0';
   prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch("extensions.coffeescript.");
   if (ko.notifications) {
     msgLevels = {
@@ -26,18 +42,30 @@ extensions.coffeescript = (function() {
   /*
   	compiles the current file
   */
-  this.compileFile = function(showWarning) {
-    var d, file, newFilename, output, path;
+  this.compileFile = function(filepath, showWarning) {
+    var contents, d, file, newFilename, output, path;
+    if (filepath == null) filepath = null;
     if (showWarning == null) showWarning = false;
     _this._removeLog();
-    d = _this._getCurrentDoc();
-    file = d.file;
+    if (typeof filepath === "boolean") {
+      showWarning = filepath;
+      filepath = null;
+    }
+    if (filepath !== null) {
+      file = _this._getFile(filepath);
+      file.open('r');
+      contents = file.readfile();
+    } else {
+      d = _this._getCurrentDoc();
+      file = d.file;
+      contents = d.buffer;
+    }
     if (!file) {
       _this._log('Please save the file first', msgLevels.ERROR, 'Did you mean to compile the buffer?');
       return false;
     }
-    if (d.language === 'CoffeeScript' || file.ext === '.coffee') {
-      output = _this._compile(d.buffer);
+    if (file.ext === '.coffee') {
+      output = _this._compile(contents);
       if (output) {
         path = file.URI;
         newFilename = path.replace('.coffee', '.js');
@@ -85,6 +113,15 @@ extensions.coffeescript = (function() {
   */
   this._getCurrentDoc = function() {
     return ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc;
+  };
+  /*
+  	reads an external file
+  */
+  this._getFile = function(filepath) {
+    var reader;
+    reader = Components.classes["@activestate.com/koFileEx;1"].createInstance(Components.interfaces.koIFileEx);
+    reader.path = filepath;
+    return reader;
   };
   /*
   	compiles a string

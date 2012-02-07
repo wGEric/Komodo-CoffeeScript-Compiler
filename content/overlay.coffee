@@ -1,8 +1,27 @@
+###
+Copyright (C) 2012 Eric Faerber
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###
+
 xtk.load 'chrome://coffeescriptcompiler/content/toolkit.js'
 xtk.load 'chrome://coffeescriptcompiler/content/coffee-script.js'
 
 extensions ?= {}
 extensions.coffeescript = do () ->
+	@version = '2.0.0'
+
 	# preferences
 	prefs = Components.classes["@mozilla.org/preferences-service;1"]
         .getService(Components.interfaces.nsIPrefService).getBranch("extensions.coffeescript.")
@@ -27,12 +46,24 @@ extensions.coffeescript = do () ->
 	###
 	compiles the current file
 	###
-	@compileFile = (showWarning = false) =>
+	@compileFile = (filepath = null, showWarning = false) =>
 		@_removeLog()
 
-		# get the current document
-		d = @_getCurrentDoc()
-		file = d.file
+		# if filepath is a boolean then it is really the showWarning variable
+		if typeof filepath is "boolean"
+			showWarning = filepath
+			filepath = null
+
+		# setup the variables, either get them from the external file or from the current document
+		unless filepath is null
+			file = @_getFile filepath
+			file.open 'r'
+			contents = file.readfile()
+		else
+			# get the current document
+			d = @_getCurrentDoc()
+			file = d.file
+			contents = d.buffer
 
 		# make sure there is a file. If there isn't, it hasn't been saved
 		unless file
@@ -40,9 +71,8 @@ extensions.coffeescript = do () ->
 			return false
 
 		# make sure it is a coffee script file
-		if d.language is 'CoffeeScript' or file.ext == '.coffee'
-			output = @_compile(d.buffer) # compile the coffeescript
-
+		if file.ext == '.coffee'
+			output = @_compile(contents);
 
 			if output
 				path = file.URI
@@ -93,6 +123,17 @@ extensions.coffeescript = do () ->
 	###
 	@_getCurrentDoc = () =>
 		ko.views.manager.currentView.document or ko.views.manager.currentView.koDoc
+
+	###
+	reads an external file
+	###
+	@_getFile = (filepath) =>
+		reader = Components
+				.classes["@activestate.com/koFileEx;1"]
+				.createInstance Components.interfaces.koIFileEx
+
+		reader.path = filepath
+		reader
 
 	###
 	compiles a string
