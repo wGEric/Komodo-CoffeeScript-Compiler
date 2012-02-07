@@ -14,13 +14,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-xtk.load('chrome://coffeescriptcompiler/content/toolkit.js');
-
 xtk.load('chrome://coffeescriptcompiler/content/coffee-script.js');
 
-if (typeof extensions === "undefined" || extensions === null) extensions = {};
+if (ko.extensions == null) ko.extensions = {};
 
-extensions.coffeescript = (function() {
+ko.extensions.coffeescript = (function() {
   var msgLevels, prefs,
     _this = this;
   this.version = '2.0.0';
@@ -189,3 +187,7 @@ extensions.coffeescript = (function() {
   };
   return this;
 })();
+
+if (typeof extensions === "undefined" || extensions === null) extensions = {};
+
+extensions.coffeescript = ko.extensions.coffeescript;

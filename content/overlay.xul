@@ -3,9 +3,9 @@
 	<script type="application/x-javascript" src="chrome://coffeescriptcompiler/content/overlay.js" />
 
     <commandset id="allcommands">
-      <command id="Tasks:CoffeeScriptCompileFile" oncommand="extensions.coffeescript.compileFile(true);"/>
-      <command id="Tasks:CoffeeScriptCompileBuffer" oncommand="extensions.coffeescript.compileBuffer();"/>
-      <command id="Tasks:CoffeeScriptCompileSelection" oncommand="extensions.coffeescript.compileSelection();"/>
+      <command id="Tasks:CoffeeScriptCompileFile" oncommand="ko.extensions.coffeescript.compileFile(true);"/>
+      <command id="Tasks:CoffeeScriptCompileBuffer" oncommand="ko.extensions.coffeescript.compileBuffer();"/>
+      <command id="Tasks:CoffeeScriptCompileSelection" oncommand="ko.extensions.coffeescript.compileSelection();"/>
     </commandset>
 
     <menupopup id="popup_tools">

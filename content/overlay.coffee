@@ -15,11 +15,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###
 
-xtk.load 'chrome://coffeescriptcompiler/content/toolkit.js'
 xtk.load 'chrome://coffeescriptcompiler/content/coffee-script.js'
 
-extensions ?= {}
-extensions.coffeescript = do () ->
+ko.extensions ?= {}
+ko.extensions.coffeescript = do () ->
 	@version = '2.0.0'
 
 	# preferences
@@ -204,3 +203,7 @@ extensions.coffeescript = do () ->
 		true
 
 	@
+
+# legacy support
+extensions ?= {}
+extensions.coffeescript = ko.extensions.coffeescript;

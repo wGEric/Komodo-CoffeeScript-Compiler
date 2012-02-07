@@ -18,8 +18,14 @@ Goto to Tools -> CoffeeScript and select an option.
 
 You can [create a macro](http://docs.activestate.com/komodo/6.1/macros.html#macros_top) that will automatically compiles a CoffeeScript file when you save. Use the following code and have it trigger _After file save_:
 
-    if (extensions.coffeescript) {
-        extensions.coffeescript.compileFile();
+    if (ko.extensions.coffeescript) {
+        ko.extensions.coffeescript.compileFile();
     }
 
 # Change Log
+
+## 2.0.0
+
+* Addon is now written in CoffeeScript
+* `ko.extensions.coffeescript.compileFile('path/to/file');` is now available
+* Komodo 7 now uses the Notifications pane instead of the Command Output
