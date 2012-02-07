@@ -1,132 +1,154 @@
-// tools for common Komodo extension chores
+
 xtk.load('chrome://coffeescriptcompiler/content/toolkit.js');
 
 xtk.load('chrome://coffeescriptcompiler/content/coffee-script.js');
 
-/**
- * Namespaces
- */
-if (typeof(extensions) === 'undefined') extensions = {};
-if (typeof(extensions.coffeescript) === 'undefined') extensions.coffeescript = { version : '1.1.0' };
+if (typeof extensions === "undefined" || extensions === null) extensions = {};
 
-(function() {
-	var self = this;
-
-	var prefs = Components.classes["@mozilla.org/preferences-service;1"]
-        .getService(Components.interfaces.nsIPrefService).getBranch("extensions.coffeescript.");
-
-	if (typeof ko.notifications !== 'undefined') {
-		var msgLevels = {
-			INFO : Components.interfaces.koINotification.SEVERITY_INFO,
-			WARNING : Components.interfaces.koINotification.SEVERITY_WARNING,
-			ERROR : Components.interfaces.koINotification.SEVERITY_ERROR
-		};
-	} else {
-		// Komodo console in Output Window
-		xtk.load('chrome://coffeescriptcompiler/content/konsole.js');
-
-		var msgLevels = {
-			INFO : msgLevels.INFO,
-			WARNING : konsole.S_WARNING,
-			ERROR : konsole.S_ERROR
-		};
-	}
-
-	this.compileFile = function(showWarning) {
-		showWarning = showWarning || false;
-
-		var d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc,
-			file = d.file,
-			path = (file) ? file.URI : null;
-
-		if (!file) {
-			self._log('Please save the file first', msgLevels.ERROR, 'Did you mean to compile the buffer?');
-			return;
-		}
-
-		if (d.language == 'CoffeeScript') {
-			self._log('Compiling CoffeeScript into Javascript', msgLevels.INFO);
-
-			var output = this._compile(d.buffer),
-				newFilename = path.replace('.coffee', '.js');
-
-			if (output) {
-				self._saveFile(newFilename, output);
-			}
-		} else {
-			if (showWarning) {
-				self._log('Not a CoffeeScript file', msgLevels.WARNING);
-			}
-		}
-	};
-
-	this.compileBuffer = function() {
-		var d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc,
-			output = this._compile(d.buffer);
-
-		if (output) {
-			d.buffer = output;
-		}
-	};
-
-	this.compileSelection = function() {
-		var view = ko.views.manager.currentView,
-			scimoz = view.scintilla.scimoz;
-			text = scimoz.selText;
-
-			var output = this._compile(text);
-
-			if (output) {
-				scimoz.targetStart = scimoz.currentPos;
-				scimoz.targetEnd = scimoz.anchor;
-				scimoz.replaceTarget(output.length, output);
-			}
-	};
-
-	this._saveFile = function(filepath, filecontent) {
-		try {
-			var file = Components
-				.classes["@activestate.com/koFileEx;1"]
-				.createInstance(Components.interfaces.koIFileEx);
-			file.path = filepath;
-
-			file.open('w');
-
-			file.puts(filecontent);
-			file.close();
-
-			self._log('File saved as: ' + filepath, msgLevels.INFO);
-		} catch(e) {
-			self._log('Error saving file', msgLevels.ERROR, e.message);
-		}
-
-		return;
-	};
-
-	this._compile = function(text) {
-		try {
-			return CoffeeScript.compile(text, {
-				bare: prefs.getBoolPref('bare')
-			});
-		} catch(e) {
-			self._log('Error parsing CoffeeScript', msgLevels.ERROR, e.message);
-			return false;
-		}
-	};
-
-	this._log = function(message, style, extra) {
-		extra = extra || '';
-
-		if (style == msgLevels.ERROR || prefs.getBoolPref('showMessages')) {
-			if (typeof ko.notifications !== 'undefined') {
-				ko.notifications.add(message, ['CoffeeScript Compiler'], 'coffeescript' + (new Date().getTime()), {
-					severity : style,
-					description : extra
-				});
-			} else {
-				konsole.popup();
-				konsole.writeln('[CoffeeScript] ' + message + extra, style);
-			}
-		}
-	};
-}).apply(extensions.coffeescript);
+extensions.coffeescript = (function() {
+  var msgLevels, prefs,
+    _this = this;
+  prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch("extensions.coffeescript.");
+  if (ko.notifications) {
+    msgLevels = {
+      INFO: Components.interfaces.koINotification.SEVERITY_INFO,
+      WARNING: Components.interfaces.koINotification.SEVERITY_WARNING,
+      ERROR: Components.interfaces.koINotification.SEVERITY_ERROR
+    };
+  } else {
+    xtk.load('chrome://coffeescriptcompiler/content/konsole.js');
+    msgLevels = {
+      INFO: konsole.S_OK,
+      WARNING: konsole.S_WARNING,
+      ERROR: konsole.S_ERROR
+    };
+  }
+  /*
+  	compiles the current file
+  */
+  this.compileFile = function(showWarning) {
+    var d, file, newFilename, output, path;
+    if (showWarning == null) showWarning = false;
+    _this._removeLog();
+    d = _this._getCurrentDoc();
+    file = d.file;
+    if (!file) {
+      _this._log('Please save the file first', msgLevels.ERROR, 'Did you mean to compile the buffer?');
+      return false;
+    }
+    if (d.language === 'CoffeeScript' || file.ext === '.coffee') {
+      output = _this._compile(d.buffer);
+      if (output) {
+        path = file.URI;
+        newFilename = path.replace('.coffee', '.js');
+        return _this._saveFile(newFilename, output);
+      }
+    } else if (showWarning) {
+      _this._log('Not a CoffeeScript file', msgLevels.ERROR);
+    }
+    return false;
+  };
+  /*
+  	compiles the current buffer
+  */
+  this.compileBuffer = function() {
+    var d, output;
+    _this._removeLog();
+    d = _this._getCurrentDoc();
+    output = _this._compile(d.buffer);
+    if (output !== false) {
+      d.buffer = output;
+      return true;
+    }
+    return false;
+  };
+  /*
+  	compiles the current selection
+  */
+  this.compileSelection = function() {
+    var output, scimoz, text, view;
+    _this._removeLog();
+    view = ko.views.manager.currentView;
+    scimoz = view.scintilla.scimoz;
+    text = scimoz.selText;
+    output = _this._compile(text);
+    if (output) {
+      scimoz.targetStart = scimoz.currentPos;
+      scimoz.targetEnd = scimoz.anchor;
+      scimoz.replaceTarget(output.length, output);
+      return true;
+    }
+    return false;
+  };
+  /*
+  	gets the current document
+  */
+  this._getCurrentDoc = function() {
+    return ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc;
+  };
+  /*
+  	compiles a string
+  */
+  this._compile = function(text) {
+    var output;
+    try {
+      output = CoffeeScript.compile(text, {
+        bare: prefs.getBoolPref('bare')
+      });
+    } catch (e) {
+      _this._log('Error parsing CoffeeScript', msgLevels.ERROR, e.message);
+    }
+    return output || false;
+  };
+  /*
+  	saves a file
+  */
+  this._saveFile = function(filepath, filecontent) {
+    var file;
+    try {
+      _this._log('Saving file as: ' + filepath, msgLevels.INFO);
+      file = Components.classes["@activestate.com/koFileEx;1"].createInstance(Components.interfaces.koIFileEx);
+      file.path = filepath;
+      file.open('w');
+      file.puts(filecontent);
+      file.close();
+      _this._log('File saved as: ' + filepath, msgLevels.INFO);
+    } catch (e) {
+      _this._log('Error saving file', msgLevels.ERROR, e.message);
+      return false;
+    }
+    return true;
+  };
+  /*
+  	removes entry from the notifications
+  */
+  this._removeLog = function() {
+    if (!prefs.getBoolPref('showMessages') && ko.notifications && _this.notification) {
+      ko.notifications.remove(_this.notification);
+    }
+    return true;
+  };
+  /*
+  	writes to the log
+  */
+  this._log = function(msg, level, description) {
+    var noteId;
+    if (level == null) level = msgLevels.INFO;
+    if (description == null) description = '';
+    if (level === msgLevels.ERROR || prefs.getBoolPref('showMessages')) {
+      if (ko.notifications) {
+        noteId = !prefs.getBoolPref('showMessages') ? 'coffeescript' : 'coffeescript' + (new Date().getTime());
+        _this.notification = ko.notifications.add(msg, ['CoffeeScript Compiler'], noteId, {
+          severity: level,
+          description: description
+        });
+      } else {
+        if (description !== '') description = ': ' + description;
+        konsole.popup();
+        konsole.writeln('[CoffeeScript] ' + msg + description, level);
+      }
+    }
+    return true;
+  };
+  return this;
+})();
