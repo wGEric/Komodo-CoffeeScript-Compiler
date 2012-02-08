@@ -41,7 +41,7 @@ ko.extensions.coffeescript = (function() {
   	compiles the current file
   */
   this.compileFile = function(filepath, showWarning) {
-    var contents, d, file, newFilename, output, path;
+    var contents, d, file, newFilename, output, path, status;
     if (filepath == null) filepath = null;
     if (showWarning == null) showWarning = false;
     _this._removeLog();
@@ -67,7 +67,9 @@ ko.extensions.coffeescript = (function() {
       if (output) {
         path = file.URI;
         newFilename = path.replace('.coffee', '.js');
-        return _this._saveFile(newFilename, output);
+        status = _this._saveFile(newFilename, output);
+        if (_this._checkUglify()) _this._uglifyFile(newFilename);
+        return status;
       }
     } else if (showWarning) {
       _this._log('Not a CoffeeScript file', msgLevels.ERROR);
@@ -162,6 +164,28 @@ ko.extensions.coffeescript = (function() {
       ko.notifications.remove(_this.notification);
     }
     return true;
+  };
+  /*
+  	checks to see if uglify is enabled, installed and the correct version
+  */
+  this._checkUglify = function() {
+    var uglifyVer;
+    if (prefs.getBoolPref('uglify') && ko.extensions.uglifyjs) {
+      uglifyVer = ko.extensions.uglifyjs.version || '';
+      uglifyVer = uglifyVer.split('.');
+      if (uglifyVer[0] < 2) {
+        _this._log('UglifyJS needs to be version 2.0.0 or higher', msgLevels.WARNING);
+        return false;
+      }
+      return true;
+    }
+    return false;
+  };
+  /*
+  	uglifies a file
+  */
+  this._uglifyFile = function(filepath) {
+    return ko.extensions.uglifyjs.compressFile(filepath);
   };
   /*
   	writes to the log

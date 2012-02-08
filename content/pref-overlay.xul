@@ -9,6 +9,7 @@
 	  <preferences>
 		<preference id="pref_showMessages" name="extensions.coffeescript.showMessages" type="bool" />
 		<preference id="pref_bare" name="extensions.coffeescript.bare" type="bool" />
+		<preference id="pref_uglify" name="extensions.coffeescript.uglify" type="bool" />
 	  </preferences>
 
 	  <hbox align="center">
@@ -16,6 +17,9 @@
 	  </hbox>
 	  <hbox align="center">
 		<checkbox id="bare" preference="pref_bare" label="Compile the JavaScript without the top-level function safety wrapper" />
+	  </hbox>
+	  <hbox align="center">
+		<checkbox id="uglify" preference="pref_uglify" label="Compress using UglifyJS (Requires UglifyJS v2.0.0 or higher)" />
 	  </hbox>
 	</prefpane>
 

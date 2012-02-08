@@ -76,7 +76,13 @@ ko.extensions.coffeescript = do () ->
 			if output
 				path = file.URI
 				newFilename = path.replace '.coffee', '.js'
-				return @_saveFile newFilename, output
+
+				status = @_saveFile newFilename, output
+
+				if @_checkUglify()
+					@_uglifyFile newFilename
+
+				return status
 		else if showWarning
 			@_log 'Not a CoffeeScript file', msgLevels.ERROR
 
@@ -179,6 +185,28 @@ ko.extensions.coffeescript = do () ->
 			ko.notifications.remove @notification
 
 		true
+
+	###
+	checks to see if uglify is enabled, installed and the correct version
+	###
+	@_checkUglify = () =>
+		if prefs.getBoolPref('uglify') and ko.extensions.uglifyjs
+			uglifyVer = ko.extensions.uglifyjs.version or ''
+			uglifyVer = uglifyVer.split '.'
+
+			if uglifyVer[0] < 2
+				@_log 'UglifyJS needs to be version 2.0.0 or higher', msgLevels.WARNING
+				return false
+
+			return true
+
+		false
+
+	###
+	uglifies a file
+	###
+	@_uglifyFile = (filepath) =>
+		ko.extensions.uglifyjs.compressFile filepath
 
 	###
 	writes to the log

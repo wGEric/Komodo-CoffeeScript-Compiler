@@ -29,3 +29,4 @@ You can [create a macro](http://docs.activestate.com/komodo/6.1/macros.html#macr
 * Addon is now written in CoffeeScript
 * `ko.extensions.coffeescript.compileFile('path/to/file');` is now available
 * Komodo 7 now uses the Notifications pane instead of the Command Output
+* Added the option to compress the file using UglifyJS (if it is installed and at least version 2.0.0) after compiled to javascript
